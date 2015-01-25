@@ -13,7 +13,7 @@ var connection = mysql.createConnection({
 router.get('/', function(req, res, next) {
   //console.log('sensor id: ' + req.query['sensorId']);
   if (('sensorId' in  req.query)) {
-    connection.connect();
+    // looks like we don't need this - connection.connect();
 
     sensorId = req.query['sensorId'];
     var query = connection.query('insert into sensor_data (ts,sensor_id) values (now(),'+sensorId+')' , function(err, result) {
@@ -21,7 +21,7 @@ router.get('/', function(req, res, next) {
       //console.log('The solution is: ', rows[0].solution);
       //console.log('inserted');
     });
-    connection.end();
+    // looks like we don't need this - connection.end();
     res.send('got it');
   } else {
      res.send('missing something');
