@@ -9,11 +9,14 @@ sudo npm install express-generator -g
 sudo ln -s /usr/bin/nodejs /usr/local/bin/node
 
 # Firewall setup
+sudo apt-get update
+sudo apt-get install iptables-persistent
 sudo vim /etc/sysctl.conf
   uncomment "net.ipv4.ip_forward"
 sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 3000
 sudo iptables -A INPUT -p tcp -m tcp --sport 80 -j ACCEPT
 sudo iptables -A OUTPUT -p tcp -m tcp --dport 80 -j ACCEPT
+sudo iptables-save | sudo tee /etc/iptables/rules.v4
 
 # Install mySQL
 http://www.tocker.ca/2014/04/21/installing-mysql-5-6-on-ubuntu-14-04-trusty-tahr.html
