@@ -1,5 +1,5 @@
 /*
-
+ works only on Arduino 1.0.X
  Based om Web server by by Tom Igoe
  Based on ChatServer example by David A. Mellis
  Based on Web Server well structured. by Alessandro Calzavara, alessandro(dot)calzavara(at)gmail(dot)com 
