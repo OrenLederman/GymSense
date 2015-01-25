@@ -37,10 +37,6 @@ EthernetServer server(80);
 // A UDP instance to let us send and receive packets over UDP. Needed for NTP
 EthernetUDP Udp;
 
-// client defs
-EthernetClient client;
-char serverName[] = "orenled-inno.media.mit.edu"; 
-
 /**********************************************************************************************************************
 *                                   Memory space for string management and setup WebServer service
 ***********************************************************************************************************************/
@@ -106,13 +102,33 @@ int movementLedPin2 = 6;
 int movement1 = 0;
 int movement2 = 0;
 
+// last movement time
 time_t lastMovementTime1 = 0; // last time there was movment
 time_t lastMovementTime2 = 0; // last time there was movment
 
 // temp vars used for calcualtion (I think)
 time_t utc = 0; //
 
-long lastReadingTime = 0;
+unsigned long lastReadingTime = 0;
+
+/**********************************************************************************************************************
+*                                   Status update variables
+***********************************************************************************************************************/
+// client defs
+EthernetClient client;
+char serverName[] = "orenled-inno.media.mit.edu"; 
+
+// how often to write status to the server
+int UPDATE_INTERVAL = 15*1000; // update every 15 seconds
+
+// last update time
+unsigned long lastUpdateTime = 0; // last time we updated the server
+unsigned long currentMillis = 0;
+
+// activity counts for sensors (will be reset after every update to the server)
+int activityCount1 = 0;
+int activityCount2 = 0;
+
 /**********************************************************************************************************************
 *                                   Code
 ***********************************************************************************************************************/
@@ -190,13 +206,31 @@ Main loop
 *********************************************************************************************/
 void loop() {
    // perform a sensor reading no more than once a second.
-  if (millis() - lastReadingTime > 1000){
+  currentMillis = millis();
+  if (currentMillis - lastReadingTime > 1000){
+      Serial.println("Reading sensors");
+        Serial.println(lastReadingTime);
       getData1();
       getData2();
       // timestamp the last time you got a reading:
-      lastReadingTime = millis();
-      //writeMovement(1);
+      lastReadingTime = currentMillis;
   }
+  
+  // update every X seconds (most likely 15)
+  if (currentMillis - lastUpdateTime > UPDATE_INTERVAL){
+      Serial.println(lastUpdateTime);    
+      Serial.println("Updating server");
+      
+      // write data to server
+      writeMovement(1,activityCount1);
+      writeMovement(2,activityCount2);      
+
+      // update the last time we updated the server, and reset the counters
+      lastUpdateTime = currentMillis;
+      activityCount1 = 0;
+      activityCount2 = 0;
+  }  
+  
   // listen for incoming Ethernet connections:
   listenForEthernetClients();
 }
@@ -204,7 +238,6 @@ void loop() {
 /*********************************************************************************************
 Read data from Sensor
 *********************************************************************************************/
-
 void getData1() {
   movement1 = digitalRead(pimPin1);
   
@@ -213,13 +246,11 @@ void getData1() {
     time_t local = myTZ.toLocal(lastMovementTime1, &tcr);
     Serial.print("Sensor1 ");    
     printTime(local, tcr -> abbrev);
+    activityCount1 = activityCount1 + 1;
     digitalWrite(movementLedPin1, HIGH); 
   } else {
     digitalWrite(movementLedPin1, LOW);     
   }
-  //Serial.print("Movement? ");
-  //Serial.println(movement);
-
 
 }
 
@@ -231,29 +262,33 @@ void getData2() {
     time_t local = myTZ.toLocal(lastMovementTime2, &tcr);
     Serial.print("Sensor2 ");
     printTime(local, tcr -> abbrev);
-    
+    activityCount2 = activityCount2 + 1;  
     digitalWrite(movementLedPin2, HIGH); 
   } else {
     digitalWrite(movementLedPin2, LOW);     
   }
 }
-
 /**********************************************************************************************************************
 *                                              Update movement in database
 ***********************************************************************************************************************/
-void writeMovement(int sensorId) {
+void writeMovement(int sensorId, int count) {
   Serial.println("Lets try to write to web server");
    // if you get a connection, report back via serial:
   if (client.connect(serverName, 80)) {
     Serial.println("connected");
     // Make a HTTP request:
-    client.println("GET /updateStat?sensorId=1 HTTP/1.1");
+    client.print("GET /updateStat?sensorId=");
+    client.print(sensorId);
+    client.print("&activityCount=");
+    client.print(count);
+    client.println(" HTTP/1.1");
     client.print("Host: ");
     client.println(serverName);
     client.println("Connection: close");
     client.println();    
   } else { //cant connect
         Serial.println("cant make HTTP request");
+        blinkError(3);
   }
   
   if (client.connected()) { 
