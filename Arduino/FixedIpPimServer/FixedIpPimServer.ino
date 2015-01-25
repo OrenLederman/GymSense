@@ -21,11 +21,11 @@
 // The IP address will be dependent on your local network.
 // gateway and subnet are optional:
 // use this for final version (is configured for the the ethernet port donwstairs)
-//byte mac[] = { 
-//  0x00, 0xFE, 0xFE, 0xFE, 0xAA, 0x01 };
+byte mac[] = { 
+  0x00, 0xFE, 0xFE, 0xFE, 0xAA, 0x01 };
 
 // this one is just for testing
-byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+//byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 
 IPAddress ip(18,139,1, 86);
 IPAddress gateway(18,139,0, 1);
@@ -152,6 +152,7 @@ void setup() {
     ; // wait for serial port to connect. Needed for Leonardo only
   }
 
+  /*
   // start the Ethernet connection:
   Serial.println("Trying to get an IP address using DHCP");
   if (Ethernet.begin(mac) == 0) {
@@ -161,14 +162,13 @@ void setup() {
     // initialize the ethernet device not using DHCP:
     Ethernet.begin(mac, ip, gateway, subnet);
   }
+  */
 
-  /*
   // use fixed IP given by MIT
   Serial.println("Setting IP");  
   // The original example doesn't provide the "dns". I'm 
   // not sure how DNS is set here... but it seems to be working
   Ethernet.begin(mac, ip, dns, gateway, subnet);
-  */
   
   // give the Ethernet shield a second to initialize:
   delay(1000);
