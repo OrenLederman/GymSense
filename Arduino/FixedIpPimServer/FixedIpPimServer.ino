@@ -20,8 +20,13 @@
 // Enter a MAC address and IP address for your controller below.
 // The IP address will be dependent on your local network.
 // gateway and subnet are optional:
-byte mac[] = { 
-  0x00, 0xFE, 0xFE, 0xFE, 0xAA, 0x01 };
+// use this for final version (is configured for the the ethernet port donwstairs)
+//byte mac[] = { 
+//  0x00, 0xFE, 0xFE, 0xFE, 0xAA, 0x01 };
+
+// this one is just for testing
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+
 IPAddress ip(18,139,1, 86);
 IPAddress gateway(18,139,0, 1);
 IPAddress subnet(255, 255, 0, 0);
@@ -31,6 +36,10 @@ EthernetServer server(80);
 
 // A UDP instance to let us send and receive packets over UDP. Needed for NTP
 EthernetUDP Udp;
+
+// client defs
+EthernetClient client;
+char serverName[] = "orenled-inno.media.mit.edu"; 
 
 /**********************************************************************************************************************
 *                                   Memory space for string management and setup WebServer service
@@ -128,7 +137,6 @@ void setup() {
   }
 
   // start the Ethernet connection:
-  /*
   Serial.println("Trying to get an IP address using DHCP");
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Failed to configure Ethernet using DHCP");
@@ -137,14 +145,17 @@ void setup() {
     // initialize the ethernet device not using DHCP:
     Ethernet.begin(mac, ip, gateway, subnet);
   }
-  */
-  
 
+  /*
   // use fixed IP given by MIT
   Serial.println("Setting IP");  
   // The original example doesn't provide the "dns". I'm 
   // not sure how DNS is set here... but it seems to be working
   Ethernet.begin(mac, ip, dns, gateway, subnet);
+  */
+  
+  // give the Ethernet shield a second to initialize:
+  delay(1000);
   
   // print your local IP address:
   Serial.print("My IP address: ");
@@ -155,6 +166,7 @@ void setup() {
     Serial.print("."); 
   }
   Serial.println();
+  
   // start listening for clients
   server.begin();
 
@@ -171,7 +183,6 @@ void setup() {
   // finished init
   digitalWrite(statusLedPin, LOW); 
   Serial.println("turned off led");   
-  // init sensors?
 }
 
 /*********************************************************************************************
@@ -184,11 +195,10 @@ void loop() {
       getData2();
       // timestamp the last time you got a reading:
       lastReadingTime = millis();
+      //writeMovement(1);
   }
-
   // listen for incoming Ethernet connections:
   listenForEthernetClients();
-    
 }
 
 /*********************************************************************************************
@@ -227,6 +237,31 @@ void getData2() {
     digitalWrite(movementLedPin2, LOW);     
   }
 }
+
+/**********************************************************************************************************************
+*                                              Update movement in database
+***********************************************************************************************************************/
+void writeMovement(int sensorId) {
+  Serial.println("Lets try to write to web server");
+   // if you get a connection, report back via serial:
+  if (client.connect(serverName, 80)) {
+    Serial.println("connected");
+    // Make a HTTP request:
+    client.println("GET /updateStat?sensorId=1 HTTP/1.1");
+    client.print("Host: ");
+    client.println(serverName);
+    client.println("Connection: close");
+    client.println();    
+  } else { //cant connect
+        Serial.println("cant make HTTP request");
+  }
+  
+  if (client.connected()) { 
+    Serial.println("Disconnect");
+    client.stop();	// DISCONNECT FROM THE SERVER
+  }
+}
+
 /**********************************************************************************************************************
 *                                              Answering clients
 ***********************************************************************************************************************/
@@ -237,6 +272,7 @@ void listenForEthernetClients() {
   EthernetClient client = server.available();
   if (client) {
     Serial.println("Got a client");
+    Serial.println(lastMovementTime1);    
     // an http request ends with a blank line
     boolean currentLineIsBlank = true;
     while (client.connected()) {
@@ -331,9 +367,9 @@ void blinkError(int times) {
   // finished init
   for (int i=0; i < times; i++) {
     digitalWrite(statusLedPin, HIGH);
-    delay(200);
+    delay(500);
     digitalWrite(statusLedPin, LOW);  
-    delay(200);
+    delay(500);
   }
 }
 
@@ -342,9 +378,9 @@ void blinkErrorInfi() {
   // finished init
   while (1==1) {
     digitalWrite(statusLedPin, HIGH);
-    delay(200);
+    delay(100);
     digitalWrite(statusLedPin, LOW);  
-    delay(200);
+    delay(100);
   }
 }
 
