@@ -21,8 +21,7 @@
 // The IP address will be dependent on your local network.
 // gateway and subnet are optional:
 // use this for final version (is configured for the the ethernet port donwstairs)
-byte mac[] = { 
-  0x00, 0xFE, 0xFE, 0xFE, 0xAA, 0x01 };
+byte mac[] = {  0x00, 0xFE, 0xFE, 0xFE, 0xAA, 0x01 };
 
 // this one is just for testing
 //byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -30,6 +29,7 @@ byte mac[] = {
 IPAddress ip(18,139,1, 86);
 IPAddress gateway(18,139,0, 1);
 IPAddress subnet(255, 255, 0, 0);
+IPAddress dnsAddress(18,71,0,151);
 
 // telnet defaults to port 23
 EthernetServer server(80);
@@ -109,7 +109,7 @@ time_t lastMovementTime2 = 0; // last time there was movment
 // temp vars used for calcualtion (I think)
 time_t utc = 0; //
 
-unsigned long lastReadingTime = 0;
+long lastReadingTime = 0;
 
 /**********************************************************************************************************************
 *                                   Status update variables
@@ -152,7 +152,7 @@ void setup() {
     ; // wait for serial port to connect. Needed for Leonardo only
   }
 
-  /*
+ /*
   // start the Ethernet connection:
   Serial.println("Trying to get an IP address using DHCP");
   if (Ethernet.begin(mac) == 0) {
@@ -162,14 +162,14 @@ void setup() {
     // initialize the ethernet device not using DHCP:
     Ethernet.begin(mac, ip, gateway, subnet);
   }
-  */
+*/ 
 
   // use fixed IP given by MIT
   Serial.println("Setting IP");  
   // The original example doesn't provide the "dns". I'm 
   // not sure how DNS is set here... but it seems to be working
-  Ethernet.begin(mac, ip, dns, gateway, subnet);
-  
+  Ethernet.begin(mac, ip, dnsAddress, gateway, subnet);
+
   // give the Ethernet shield a second to initialize:
   delay(1000);
   
@@ -215,7 +215,7 @@ void loop() {
       // timestamp the last time you got a reading:
       lastReadingTime = currentMillis;
   }
-  
+ 
   // update every X seconds (most likely 15)
   if (currentMillis - lastUpdateTime > UPDATE_INTERVAL){
       Serial.println(lastUpdateTime);    
@@ -307,7 +307,7 @@ void listenForEthernetClients() {
   EthernetClient client = server.available();
   if (client) {
     Serial.println("Got a client");
-    Serial.println(lastMovementTime1);    
+    
     // an http request ends with a blank line
     boolean currentLineIsBlank = true;
     while (client.connected()) {
