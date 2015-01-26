@@ -1,6 +1,8 @@
 # GymSense
 
+#######################################################################################################
 # NodeJS installation
+#######################################################################################################
 sudo apt-get update
 sudo apt-get install nodejs
 sudo apt-get install npm
@@ -8,7 +10,9 @@ sudo npm install express --save
 sudo npm install express-generator -g
 sudo ln -s /usr/bin/nodejs /usr/local/bin/node
 
+#######################################################################################################
 # Firewall setup
+#######################################################################################################
 sudo apt-get update
 sudo apt-get install iptables-persistent
 sudo vim /etc/sysctl.conf
@@ -18,7 +22,9 @@ sudo iptables -A INPUT -p tcp -m tcp --sport 80 -j ACCEPT
 sudo iptables -A OUTPUT -p tcp -m tcp --dport 80 -j ACCEPT
 sudo iptables-save | sudo tee /etc/iptables/rules.v4
 
+#######################################################################################################
 # Install mySQL
+#######################################################################################################
 http://www.tocker.ca/2014/04/21/installing-mysql-5-6-on-ubuntu-14-04-trusty-tahr.html
 sudo apt-get install mysql-server-5.6
 mysqladmin -u root password ??????
@@ -34,5 +40,26 @@ mysql -u gymsense -p
   CREATE INDEX sensor_data_ts ON sensor_data (ts);
   CREATE INDEX sensor_data_sid ON sensor_data (sensor_id);
 
-# For startup script, use:
+#######################################################################################################
+# For startup script, create the file  /etc/init/gymSenseNodeJS.conf with the following code:
+#######################################################################################################
+#!upstart
+# This line is needed so that Upstart reports the pid of the Node.js process
+# started by Forever rather than Forever's pid.
+start on startup
+stop on shutdown
 
+# This line is needed so that Upstart reports the pid of the Node.js process
+# started by Forever rather than Forever's pid.
+expect fork
+
+
+# script
+exec forever start /home/orenled/GymSense/NodeJS/gymSense/bin/www
+
+#######################################################################################################
+# Control commands
+#######################################################################################################
+sudo start gymSenseNodeJS
+sudo stop gymSenseNodeJS
+sudo restart gymSenseNodeJS
